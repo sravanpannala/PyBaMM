@@ -25,7 +25,7 @@ def graphite_diffusivity_PeymanMPM(sto, T):
         Solid diffusivity
     """
 
-    D_ref = 5.0 * 10 ** (-15)
+    D_ref = 8.0 * 10 ** (-14)
     E_D_s = 42770
     arrhenius = np.exp(E_D_s / pybamm.constants.R * (1 / 298.15 - 1 / T))
 
@@ -44,7 +44,7 @@ def graphite_ocp_PeymanMPM(sto):
 
     u_eq = (
         0.063
-        + 0.8 * np.exp(-75 * (sto + 0.001))
+        + 0.8 * np.exp(-75 * (sto + 0.007))
         - 0.0120 * np.tanh((sto - 0.127) / 0.016)
         - 0.0118 * np.tanh((sto - 0.155) / 0.016)
         - 0.0035 * np.tanh((sto - 0.220) / 0.020)
@@ -82,12 +82,16 @@ def graphite_electrolyte_exchange_current_density_PeymanMPM(c_e, c_s_surf, c_s_m
     :class:`pybamm.Symbol`
         Exchange-current density [A.m-2]
     """
-    m_ref = 1.061 * 10 ** (-6)  # unit has been converted
+    m_ref = 3.183 * 10 ** (-6)  # unit has been converted
     # units are (A/m2)(m3/mol)**1.5 - includes ref concentrations
     E_r = 37480
     arrhenius = np.exp(E_r / pybamm.constants.R * (1 / 298.15 - 1 / T))
+    scale = 1.2
+    shift  = 0
+    return (
+        m_ref * arrhenius * c_e**0.5 * (c_s_surf+shift)**0.5 * (c_s_max*scale - c_s_surf) ** 0.5
+    )
 
-    return m_ref * arrhenius * c_e**0.5 * c_s_surf**0.5 * (c_s_max - c_s_surf) ** 0.5
 
 
 def graphite_entropic_change_PeymanMPM(sto):
@@ -172,7 +176,7 @@ def NMC_ocp_PeymanMPM(sto):
         - 2.0843 * (sto**3)
         + 3.5146 * (sto**4)
         - 2.2166 * (sto**5)
-        - 0.5623e-4 * np.exp(109.451 * sto - 100.006)
+        - 0.5623 * pybamm.exp(109.451 * sto - 100.006)
     )
 
     return u_eq
@@ -203,11 +207,14 @@ def NMC_electrolyte_exchange_current_density_PeymanMPM(c_e, c_s_surf, c_s_max, T
     :class:`pybamm.Symbol`
         Exchange-current density [A.m-2]
     """
-    m_ref = 4.824 * 10 ** (-6)  # (A/m2)(m3/mol)**1.5 - includes ref concentrations
+    m_ref = 3.377 * 10 ** (-6)  # (A/m2)(m3/mol)**1.5 - includes ref concentrations
     E_r = 39570
     arrhenius = np.exp(E_r / pybamm.constants.R * (1 / 298.15 - 1 / T))
-
-    return m_ref * arrhenius * c_e**0.5 * c_s_surf**0.5 * (c_s_max - c_s_surf) ** 0.5
+    scale = 1
+    shift  = 20000
+    return (
+        m_ref * arrhenius * c_e**0.5 * (c_s_surf+shift)**0.5 * (c_s_max*scale - c_s_surf) ** 0.5
+    )
 
 
 def NMC_entropic_change_PeymanMPM(sto):
@@ -342,7 +349,7 @@ def get_parameter_values():
         "Exchange-current density for plating [A.m-2]": 0.001,
         "Initial plated lithium concentration [mol.m-3]": 0.0,
         "Typical plated lithium concentration [mol.m-3]": 1000.0,
-        "Lithium plating transfer coefficient": 0.7,
+        "Lithium plating transfer coefficient": 0.65,
         # sei
         "Ratio of lithium moles to SEI moles": 2.0,
         "SEI partial molar volume [m3.mol-1]": 9.585e-05,
@@ -389,7 +396,7 @@ def get_parameter_values():
         "Negative electrode OCP [V]": graphite_ocp_PeymanMPM,
         "Negative electrode porosity": 0.3,
         "Negative electrode active material volume fraction": 0.61,
-        "Negative particle radius [m]": 2.5e-06,
+        "Negative particle radius [m]": 1e-05,
         "Negative electrode Bruggeman coefficient (electrode)": 1.5,
         "Negative electrode Bruggeman coefficient (electrolyte)": 1.5,
         "Negative electrode transport efficiency": 0.16,
@@ -436,7 +443,7 @@ def get_parameter_values():
         "Initial concentration in electrolyte [mol.m-3]": 1000.0,
         "Cation transference number": 0.38,
         "Thermodynamic factor": 1.0,
-        "Typical lithium ion diffusivity [m2.s-1]": 5.34e-10,
+        "Typical lithium ion diffusivity [m2.s-1]": 5.35e-10,
         "Electrolyte diffusivity [m2.s-1]": electrolyte_diffusivity_PeymanMPM,
         "Electrolyte conductivity [S.m-1]": electrolyte_conductivity_PeymanMPM,
         # experiment
