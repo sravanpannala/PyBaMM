@@ -10,6 +10,7 @@
 *.hidden
 *.pkl
 *.xlsx
+proj/data/lboro/*
 
 # don't ignore important .txt and .csv files
 !requirements*
